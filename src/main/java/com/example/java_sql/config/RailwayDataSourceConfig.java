@@ -11,8 +11,8 @@ public class RailwayDataSourceConfig {
 
     @Bean
     public DataSource dataSource() {
+        // 1. Try MYSQL_URL (Private/Internal URL usually)
         String railwayUrl = System.getenv("MYSQL_URL");
-        
         if (railwayUrl != null && !railwayUrl.isEmpty()) {
             try {
                 URI uri = new URI(railwayUrl);
@@ -22,24 +22,44 @@ public class RailwayDataSourceConfig {
                 String dbUrl = "jdbc:mysql://" + uri.getHost() + ":" + uri.getPort() + uri.getPath() + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
                 
                 System.out.println("Configuring Railway DataSource from MYSQL_URL");
-
-                return DataSourceBuilder.create()
-                        .url(dbUrl)
-                        .username(username)
-                        .password(password)
-                        .driverClassName("com.mysql.cj.jdbc.Driver")
-                        .build();
+                return buildDataSource(dbUrl, username, password);
             } catch (Exception e) {
-                System.err.println("Failed to configure Railway DataSource: " + e.getMessage());
+                System.err.println("Failed to parse MYSQL_URL: " + e.getMessage());
+            }
+        }
+
+        // 2. Try Individual Variables (MYSQLHOST, MYSQLUSER, etc.)
+        String host = System.getenv("MYSQLHOST");
+        if (host != null && !host.isEmpty()) {
+            try {
+                String port = System.getenv("MYSQLPORT");
+                String database = System.getenv("MYSQLDATABASE");
+                String user = System.getenv("MYSQLUSER");
+                String password = System.getenv("MYSQLPASSWORD");
+                
+                String dbUrl = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+                
+                System.out.println("Configuring Railway DataSource from individual variables (MYSQLHOST)");
+                return buildDataSource(dbUrl, user, password);
+            } catch (Exception e) {
+                System.err.println("Failed to configure from individual variables: " + e.getMessage());
             }
         }
         
-        // Fallback for local development
+        // 3. Fallback for local development
         System.out.println("Configuring Local DataSource");
+        return buildDataSource(
+            "jdbc:mysql://localhost:3306/crud_app?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true",
+            "root",
+            "paytm786"
+        );
+    }
+
+    private DataSource buildDataSource(String url, String username, String password) {
         return DataSourceBuilder.create()
-                .url("jdbc:mysql://localhost:3306/crud_app?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true")
-                .username("root")
-                .password("paytm786")
+                .url(url)
+                .username(username)
+                .password(password)
                 .driverClassName("com.mysql.cj.jdbc.Driver")
                 .build();
     }
