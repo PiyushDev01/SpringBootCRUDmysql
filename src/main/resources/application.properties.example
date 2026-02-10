@@ -1,0 +1,15 @@
+spring.application.name=java-sql
+
+# Database Configuration - Uses environment variables with local defaults
+spring.datasource.url=${DATABASE_URL:jdbc:mysql://localhost:3306/crud_app?createDatabaseIfNotExist=true&useSSL=false}
+spring.datasource.username=${DB_USERNAME:YOUR_LOCAL_USERNAME}
+spring.datasource.password=${DB_PASSWORD:YOUR_LOCAL_PASSWORD}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA / Hibernate
+spring.jpa.show-sql=${SHOW_SQL:false}
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# Server Port - Railway automatically assigns this
+server.port=${PORT:8080}
